@@ -10,9 +10,11 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 
 import com.mzbr.business.oauth2.kakao.dto.UserOauthInfo;
 import com.mzbr.business.oauth2.userinfo.OAuth2UserInfo;
+import com.mzbr.business.store.entity.Store;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -44,6 +46,9 @@ public class Member {
 	private String socialId;
 
 	private String profileImage;
+
+	@OneToMany(mappedBy = "members")
+	List<Store> stores;
 
 	public void authorizeUser() {
 		this.role = Role.MEMBER;
