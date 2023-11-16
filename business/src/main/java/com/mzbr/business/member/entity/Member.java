@@ -15,6 +15,7 @@ import javax.persistence.OneToOne;
 import com.mzbr.business.oauth2.kakao.dto.UserOauthInfo;
 import com.mzbr.business.oauth2.userinfo.OAuth2UserInfo;
 import com.mzbr.business.store.entity.Store;
+import com.mzbr.business.video.entity.Video;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -47,8 +48,8 @@ public class Member {
 
 	private String profileImage;
 
-	@OneToMany(mappedBy = "members")
-	List<Store> stores;
+	@OneToMany(mappedBy = "member")
+	List<Video> videos;
 
 	public void authorizeUser() {
 		this.role = Role.MEMBER;
