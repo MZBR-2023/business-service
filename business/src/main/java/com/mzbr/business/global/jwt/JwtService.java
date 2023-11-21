@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
@@ -185,6 +184,14 @@ public class JwtService {
 			authoritiesMapper.mapAuthorities(userDetails.getAuthorities()));
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
+	}
+
+	public long getExpiration(String token) {
+		Date expiresAt = JWT.require(Algorithm.HMAC512(secretKey))
+			.build().verify(token)
+			.getExpiresAt();
+
+		return (expiresAt.getTime() - new Date().getTime()) / (1000 * 60);
 	}
 
 }
