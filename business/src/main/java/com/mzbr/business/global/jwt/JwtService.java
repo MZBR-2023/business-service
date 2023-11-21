@@ -61,6 +61,7 @@ public class JwtService {
 	private static final String ACCESS_TOKEN_SUBJECT = "AccessToken";
 	private static final String REFRESH_TOKEN_SUBJECT = "RefreshToken";
 	private static final String EXPIRED_TOKEN_SUBJECT = "ExpiredToken";
+	private static final String ROLE_MEMBER = "ROLE_MEMBER";
 
 	private final RedisTemplate<String, Object> redisTemplate;
 	private final MemberRepository memberRepository;
@@ -143,7 +144,7 @@ public class JwtService {
 		String accessToken = extractAccessToken(request).orElseThrow(
 			() -> new AuthException(ErrorCode.ACCESS_TOKEN_NOT_EXIST));
 		long id = extractId(accessToken).orElseThrow(() -> new AuthException(ErrorCode.ACCESS_TOKEN_INVALID));
-	
+
 		if (!refreshToken.equals(redisTemplate.opsForValue().get(id + ""))) {
 			throw new AuthException(ErrorCode.REFRESH_TOKEN_INVALID);
 		}
@@ -163,7 +164,6 @@ public class JwtService {
 			.ifPresentOrElse(accessToken -> {
 				if (!isTokenBlacklist(accessToken) && isTokenValid(accessToken)) {
 					extractId(accessToken)
-						.flatMap(memberRepository::findById)
 						.ifPresent(this::saveAuthentication);
 				} else {
 					throw new AuthException(ErrorCode.ACCESS_TOKEN_INVALID);
@@ -174,11 +174,11 @@ public class JwtService {
 		filterChain.doFilter(request, response);
 	}
 
-	public void saveAuthentication(Member member) {
+	public void saveAuthentication(long id) {
 		UserDetails userDetails = User.builder()
-			.username(String.valueOf(member.getId()))
+			.username(String.valueOf(id))
 			.password(PasswordUtil.generateRandomPassword())
-			.roles(member.getRole().name())
+			.roles(ROLE_MEMBER)
 			.build();
 
 		Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null,
