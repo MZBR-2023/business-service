@@ -26,7 +26,6 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.mzbr.business.global.exception.ErrorCode;
 import com.mzbr.business.global.exception.custom.AuthException;
 import com.mzbr.business.global.util.PasswordUtil;
-import com.mzbr.business.member.entity.Member;
 import com.mzbr.business.member.repository.MemberRepository;
 
 import lombok.Getter;
@@ -60,7 +59,7 @@ public class JwtService {
 	private static final String ACCESS_TOKEN_SUBJECT = "AccessToken";
 	private static final String REFRESH_TOKEN_SUBJECT = "RefreshToken";
 	private static final String EXPIRED_TOKEN_SUBJECT = "ExpiredToken";
-	private static final String ROLE_MEMBER = "ROLE_MEMBER";
+	private static final String ROLE_MEMBER = "MEMBER";
 
 	private final RedisTemplate<String, Object> redisTemplate;
 	private final MemberRepository memberRepository;
