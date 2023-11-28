@@ -1,5 +1,7 @@
 package com.mzbr.business.auth.service;
 
+import java.util.concurrent.TimeUnit;
+
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -7,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.mzbr.business.auth.dto.SignUpDto;
 import com.mzbr.business.global.exception.ErrorCode;
 import com.mzbr.business.global.exception.custom.BadRequestException;
+import com.mzbr.business.global.jwt.JwtService;
 import com.mzbr.business.member.entity.Member;
 import com.mzbr.business.member.entity.Role;
 import com.mzbr.business.member.repository.MemberRepository;
@@ -20,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AuthService {
 
 	private final MemberRepository memberRepository;
+	private final JwtService jwtService;
 	private final RedisTemplate<String, Object> redisTemplate;
 
 	@Transactional
@@ -40,8 +44,8 @@ public class AuthService {
 	}
 
 	public void logout(String accessToken, String userId) {
-		log.info("accessToken : {}", accessToken);
-		redisTemplate.opsForValue().set(accessToken, "BlackList");
+		redisTemplate.opsForValue()
+			.set(accessToken, "BlackList", jwtService.getExpiration(accessToken), TimeUnit.MINUTES);
 		redisTemplate.opsForValue().getAndDelete(userId);
 	}
 }

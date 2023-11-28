@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
@@ -27,7 +26,6 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.mzbr.business.global.exception.ErrorCode;
 import com.mzbr.business.global.exception.custom.AuthException;
 import com.mzbr.business.global.util.PasswordUtil;
-import com.mzbr.business.member.entity.Member;
 import com.mzbr.business.member.repository.MemberRepository;
 
 import lombok.Getter;
@@ -61,6 +59,7 @@ public class JwtService {
 	private static final String ACCESS_TOKEN_SUBJECT = "AccessToken";
 	private static final String REFRESH_TOKEN_SUBJECT = "RefreshToken";
 	private static final String EXPIRED_TOKEN_SUBJECT = "ExpiredToken";
+	private static final String ROLE_MEMBER = "MEMBER";
 
 	private final RedisTemplate<String, Object> redisTemplate;
 	private final MemberRepository memberRepository;
@@ -143,7 +142,7 @@ public class JwtService {
 		String accessToken = extractAccessToken(request).orElseThrow(
 			() -> new AuthException(ErrorCode.ACCESS_TOKEN_NOT_EXIST));
 		long id = extractId(accessToken).orElseThrow(() -> new AuthException(ErrorCode.ACCESS_TOKEN_INVALID));
-	
+
 		if (!refreshToken.equals(redisTemplate.opsForValue().get(id + ""))) {
 			throw new AuthException(ErrorCode.REFRESH_TOKEN_INVALID);
 		}
@@ -163,7 +162,6 @@ public class JwtService {
 			.ifPresentOrElse(accessToken -> {
 				if (!isTokenBlacklist(accessToken) && isTokenValid(accessToken)) {
 					extractId(accessToken)
-						.flatMap(memberRepository::findById)
 						.ifPresent(this::saveAuthentication);
 				} else {
 					throw new AuthException(ErrorCode.ACCESS_TOKEN_INVALID);
@@ -174,17 +172,25 @@ public class JwtService {
 		filterChain.doFilter(request, response);
 	}
 
-	public void saveAuthentication(Member member) {
+	public void saveAuthentication(long id) {
 		UserDetails userDetails = User.builder()
-			.username(String.valueOf(member.getId()))
+			.username(String.valueOf(id))
 			.password(PasswordUtil.generateRandomPassword())
-			.roles(member.getRole().name())
+			.roles(ROLE_MEMBER)
 			.build();
 
 		Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null,
 			authoritiesMapper.mapAuthorities(userDetails.getAuthorities()));
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
+	}
+
+	public long getExpiration(String token) {
+		Date expiresAt = JWT.require(Algorithm.HMAC512(secretKey))
+			.build().verify(token)
+			.getExpiresAt();
+
+		return (expiresAt.getTime() - new Date().getTime()) / (1000 * 60);
 	}
 
 }
